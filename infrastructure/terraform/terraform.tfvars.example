@@ -1,0 +1,38 @@
+# Copy this file to terraform.tfvars or create environment-specific files
+# Example: cp terraform.tfvars.example environments/dev.tfvars
+
+# Environment configuration
+environment = "dev"  # dev, staging, or prod
+location    = "eastus2"
+org_name    = "upstate"
+cost_center = "Healthcare-AI"
+
+# Networking
+vnet_address_space = ["10.0.0.0/16"]
+allowed_ip_ranges  = [
+  # Add your office/VPN IP ranges for administrative access
+  # "203.0.113.0/24",
+]
+
+# Monitoring
+log_retention_days = 365  # HIPAA requires minimum 365 days
+
+# Database
+db_admin_password = "REPLACE_WITH_SECURE_PASSWORD"  # Use Key Vault or env variable
+
+# LiteLLM
+litellm_master_key = "REPLACE_WITH_SECURE_KEY"  # Generate: openssl rand -base64 32
+
+# API Management
+apim_publisher_name  = "Upstate Healthcare"
+apim_publisher_email = "admin@upstate.com"
+
+# Azure AD
+azure_ad_client_id = "REPLACE_WITH_AZURE_AD_APP_CLIENT_ID"
+
+# Frontend
+frontend_custom_domain = ""  # Optional: portal.upstate.com
+
+# External AI Providers (optional)
+anthropic_api_key = ""  # Optional: Claude models
+google_project_id = ""  # Optional: Gemini models

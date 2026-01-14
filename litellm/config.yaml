@@ -1,0 +1,159 @@
+# LiteLLM Configuration for Upstate AI Portal
+# This file configures multi-model AI routing with Azure OpenAI and external providers
+
+model_list:
+  # Azure OpenAI Models (Primary)
+  - model_name: gpt-4o
+    litellm_params:
+      model: azure/gpt-4o
+      api_base: ${AZURE_OPENAI_ENDPOINT}
+      api_key: ${AZURE_OPENAI_KEY}
+      api_version: "2024-11-20"
+      tags: ["azure", "gpt-4o", "production", "clinical"]
+    model_info:
+      mode: chat
+      supports_function_calling: true
+      supports_vision: true
+      max_tokens: 128000
+      input_cost_per_token: 0.0000025
+      output_cost_per_token: 0.00001
+
+  - model_name: gpt-4-turbo
+    litellm_params:
+      model: azure/gpt-4-turbo
+      api_base: ${AZURE_OPENAI_ENDPOINT}
+      api_key: ${AZURE_OPENAI_KEY}
+      api_version: "2024-04-09"
+      tags: ["azure", "gpt-4", "production", "billing"]
+    model_info:
+      mode: chat
+      supports_function_calling: true
+      supports_vision: false
+      max_tokens: 128000
+      input_cost_per_token: 0.000001
+      output_cost_per_token: 0.000003
+
+  # External Models (Optional - requires separate BAAs)
+  # Uncomment and configure if using external providers
+
+  # - model_name: claude-3-5-sonnet
+  #   litellm_params:
+  #     model: anthropic/claude-3-5-sonnet-20241022
+  #     api_key: ${ANTHROPIC_API_KEY}
+  #     tags: ["anthropic", "claude", "external"]
+  #   model_info:
+  #     mode: chat
+  #     supports_function_calling: true
+  #     max_tokens: 200000
+
+  # - model_name: gemini-2.0-flash
+  #   litellm_params:
+  #     model: vertex_ai/gemini-2.0-flash
+  #     vertex_project: ${GOOGLE_PROJECT_ID}
+  #     vertex_location: "us-central1"
+  #     tags: ["google", "gemini", "external"]
+  #   model_info:
+  #     mode: chat
+  #     supports_function_calling: true
+
+# LiteLLM Settings
+litellm_settings:
+  # Production configuration
+  drop_params: true  # Drop unsupported parameters
+  set_verbose: false  # Disable verbose logging for production
+  json_logs: true  # Structured logging for Azure Monitor
+
+  # Callbacks for logging and monitoring
+  success_callback: []  # Add langfuse or other callbacks if needed
+  failure_callback: []
+
+  # Retry configuration
+  num_retries: 3
+  request_timeout: 600  # 10 minutes for complex requests
+  fallback_dict: {}  # Configure fallbacks if needed
+
+  # Load balancing with Redis
+  redis_host: ${REDIS_HOST}
+  redis_port: 6380  # Azure Redis SSL port
+  redis_password: ${REDIS_PASSWORD}
+  use_async: true
+
+  # Database for persistence and audit logs
+  database_url: "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/${DB_DATABASE}?sslmode=require"
+
+  # Disable telemetry for HIPAA compliance
+  telemetry: false
+
+  # Model aliasing for easier API calls
+  model_alias_map:
+    "gpt-4": "gpt-4-turbo"
+    "gpt-4o-latest": "gpt-4o"
+
+# General Settings
+general_settings:
+  # Master key for API authentication
+  master_key: ${LITELLM_MASTER_KEY}
+
+  # Database connection
+  database_url: "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/${DB_DATABASE}?sslmode=require"
+
+  # Store model configurations in database
+  store_model_in_db: true
+
+  # Use Azure Key Vault for secret management
+  use_azure_key_vault: false  # Set to true if using direct Key Vault integration
+
+  # Alerting configuration (optional)
+  # alerting: ["slack"]
+  # alerting_threshold: 300  # Alert if request takes >300 seconds
+
+  # HIPAA: Comprehensive audit logging
+  # All requests and responses are logged to PostgreSQL database
+  log_raw_request_response: false  # Set to true for debugging, false for production (PHI concerns)
+
+  # Rate limiting per user/team (enforced by APIM as well)
+  max_parallel_requests: 100
+  max_request_size_mb: 100
+  max_response_size_mb: 100
+
+# Router Settings
+router_settings:
+  # Routing strategy
+  routing_strategy: "usage-based-routing-v2"  # Balance load across model deployments
+  routing_strategy_args:
+    ttl: 60  # Time to live for routing decisions
+
+  # Model groups for load balancing
+  model_group_alias:
+    gpt-4-group:
+      - gpt-4o
+      - gpt-4-turbo
+
+  # Fallback configuration
+  fallbacks:
+    - gpt-4o: ["gpt-4-turbo"]  # Fallback to gpt-4-turbo if gpt-4o fails
+
+  # Retry strategy
+  num_retries: 2
+  timeout: 300  # Default timeout in seconds
+  allowed_fails: 3  # Number of allowed failures before cooldown
+
+  # Cooldown for failed models
+  cooldown_time: 30  # Seconds to wait before retrying failed model
+
+  # Context window management
+  enable_pre_call_checks: true  # Check token limits before API call
+
+# Environment-specific overrides
+# These can be set via environment variables:
+# - AZURE_OPENAI_ENDPOINT
+# - AZURE_OPENAI_KEY
+# - REDIS_HOST
+# - REDIS_PASSWORD
+# - DB_HOST
+# - DB_USER
+# - DB_PASSWORD
+# - DB_DATABASE
+# - LITELLM_MASTER_KEY
+# - ANTHROPIC_API_KEY (optional)
+# - GOOGLE_PROJECT_ID (optional)
