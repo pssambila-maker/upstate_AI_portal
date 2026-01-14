@@ -1,0 +1,31 @@
+{
+  "name": "upstate-ai-functions",
+  "version": "1.0.0",
+  "description": "Cloud Functions for Upstate AI Portal with multi-model support",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^4.6.0",
+    "@anthropic-ai/sdk": "^0.17.0",
+    "openai": "^4.26.0",
+    "@google/generative-ai": "^0.2.0",
+    "axios": "^1.6.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/node": "^20.11.0",
+    "firebase-functions-test": "^3.1.1"
+  },
+  "private": true
+}
