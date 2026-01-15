@@ -234,7 +234,7 @@ export const getModels = functions.https.onCall(async (data, context) => {
   return {
     models: [
       {
-        id: 'claude-3-5-sonnet-20241022',
+        id: 'claude-3-5-sonnet-20240620',
         name: 'Claude 3.5 Sonnet',
         provider: 'Anthropic',
         description: 'Most intelligent model, best for complex tasks',
