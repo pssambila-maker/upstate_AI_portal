@@ -7,16 +7,24 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // Initialize Firebase Admin
 admin.initializeApp();
 
-// Initialize AI clients
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// Initialize AI clients lazily to avoid runtime errors during deployment
+function getAnthropicClient() {
+  return new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY || functions.config().anthropic?.api_key,
+  });
+}
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getOpenAIClient() {
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY || functions.config().openai?.api_key,
+  });
+}
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
+function getGeminiClient() {
+  return new GoogleGenerativeAI(
+    process.env.GOOGLE_API_KEY || functions.config().google?.api_key || ''
+  );
+}
 
 // Rate limiting helper
 async function checkRateLimit(userId: string): Promise<void> {
@@ -118,6 +126,7 @@ export const chat = functions.https.onCall(async (data, context) => {
     // Route to appropriate model
     if (model.startsWith('claude-')) {
       // Anthropic Claude models
+      const anthropic = getAnthropicClient();
       const result = await anthropic.messages.create({
         model: model,
         max_tokens: maxTokens,
@@ -143,6 +152,7 @@ export const chat = functions.https.onCall(async (data, context) => {
 
     } else if (model.startsWith('gpt-')) {
       // OpenAI GPT models
+      const openai = getOpenAIClient();
       const result = await openai.chat.completions.create({
         model: model,
         messages: messages,
@@ -168,6 +178,7 @@ export const chat = functions.https.onCall(async (data, context) => {
 
     } else if (model.startsWith('gemini-')) {
       // Google Gemini models
+      const genAI = getGeminiClient();
       const geminiModel = genAI.getGenerativeModel({ model: model });
 
       // Convert messages to Gemini format
